@@ -1,5 +1,7 @@
 import sys
 
+from function_block.lab3_dc_motor_widget import DCMotorWidget
+from function_block.lab3_stepper_motor_widget import StepperMotorWidget
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtSerialPort import QSerialPort
@@ -14,9 +16,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from widget.lab3_dc_motor_group_box import DCMotorWidget
-from widget.lab3_serial_combo_box import SerialComboBox
-from widget.lab3_stepper_motor_group_box import StepperMotorWidget
+from widget.serial_combo_box import SerialComboBox
 
 
 class Lab3MainWindow(QMainWindow):
