@@ -1,3 +1,4 @@
+from loguru import logger
 from PySide6.QtSerialPort import QSerialPort
 from PySide6.QtWidgets import (
     QGroupBox,
@@ -27,8 +28,12 @@ class DCMotorWidget(QGroupBox):
 
     def __slot_on_dc_motor_duty_changed(self, value: int):
         self.__serial_port.write(
-            SerialPacket(
+            serial_bytes := SerialPacket(
                 SerialControlBytes.DC_MOTOR_OPEN_LOOP_VOLTAGE,
                 bytearray([int(value > 0), abs(value) >> 8, abs(value) & 0x00FF]),
             ).to_bytearray()
         )
+        logger.info(
+            f"DC motor ccw duty changed to {abs(value)}, direction: {int(value > 0)}"
+        )
+        logger.debug(f"serial_bytes: {serial_bytes}")

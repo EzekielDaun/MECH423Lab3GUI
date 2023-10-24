@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
 from serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
 from widget.valued_slider import ValuedSlider
 
+from loguru import logger
+
 
 class StepperMotorWidget(QGroupBox):
     def __init__(self, serial_port: QSerialPort, *args, **kwargs):
@@ -54,18 +56,22 @@ class StepperMotorSingleStepWidget(QGroupBox):
     def __slot_on_stepper_motor_single_step(self, button: QAbstractButton):
         if button is self.__stepper_motor_single_step_cw_button:
             self.__serial_port.write(
-                SerialPacket(
+                serial_bytes := SerialPacket(
                     SerialControlBytes.STEPPER_MOTOR_SINGLE_STEP,
                     bytearray([1]),
                 ).to_bytearray()
             )
+            logger.info("stepper motor cw single step")
+            logger.debug(f"serial_bytes: {serial_bytes}")
         elif button is self.__stepper_motor_single_step_ccw_button:
             self.__serial_port.write(
-                SerialPacket(
+                serial_bytes := SerialPacket(
                     SerialControlBytes.STEPPER_MOTOR_SINGLE_STEP,
                     bytearray([0]),
                 ).to_bytearray()
             )
+            logger.info("stepper motor ccw single step")
+            logger.debug(f"serial_bytes: {serial_bytes}")
 
 
 class StepperMotorOpenLoopSpeedWidget(QGroupBox):

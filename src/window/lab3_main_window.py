@@ -1,5 +1,3 @@
-import sys
-
 from function_block.lab3_dc_motor_widget import DCMotorWidget
 from function_block.lab3_stepper_motor_widget import StepperMotorWidget
 from PySide6.QtCore import Qt, Signal
@@ -27,10 +25,7 @@ class Lab3MainWindow(QMainWindow):
         self.__central_widget = Lab3MainWindowCentralWidget()
         self.setCentralWidget(self.__central_widget)
 
-        # redirect stdout to text browser
         self.__text_browser = QTextBrowser()
-        sys.stdout = self
-        sys.stderr = self
         self.signal_write.connect(self.__slot_write)
 
         dock_widget = QDockWidget()
