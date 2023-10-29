@@ -15,6 +15,11 @@ if __name__ == "__main__":
         with redirect_stderr(main_window):  # type: ignore
             logger.remove()
             logger.add(sys.stdout)
-            logger.add(Path(__file__).parent.parent / ".log" / "{time}.log", rotation="12:00", retention="2 days")  # type: ignore
+            logger.add(
+                Path(__file__).parent.parent / ".log" / "{time}.log",
+                rotation="12:00",
+                retention="2 days",
+            )
             logger.enable("function_block")
+            logger.enable("window")
             app.exec()

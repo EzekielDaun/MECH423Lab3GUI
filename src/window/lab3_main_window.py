@@ -1,5 +1,6 @@
 from function_block.lab3_dc_motor_widget import DCMotorWidget
 from function_block.lab3_stepper_motor_widget import StepperMotorWidget
+from loguru import logger
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtSerialPort import QSerialPort
@@ -32,6 +33,8 @@ class Lab3MainWindow(QMainWindow):
         dock_widget.setWidget(self.__text_browser)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock_widget)
 
+        self.setWindowTitle("MECH423Lab3GUI")
+
     def write(self, text: str) -> None:
         self.signal_write.emit(text)
 
@@ -62,10 +65,17 @@ class Lab3MainWindowCentralWidget(QWidget):
         serial_port_layout.addWidget(self.__serial_port_combobox)
         serial_port_layout.addWidget(self.__serial_connect_button)
 
+        self.__dc_motor_widget = DCMotorWidget()
+        self.__dc_motor_widget.signal_serial_write.connect(self.__slot_on_serial_write)
+        self.__stepper_motor_widget = StepperMotorWidget()
+        self.__stepper_motor_widget.signal_serial_write.connect(
+            self.__slot_on_serial_write
+        )
+
         self.__splitter = QSplitter(Qt.Orientation.Horizontal)
         self.__splitter.setDisabled(True)
-        self.__splitter.addWidget(DCMotorWidget(self.__serial_port))
-        self.__splitter.addWidget(StepperMotorWidget(self.__serial_port))
+        self.__splitter.addWidget(self.__dc_motor_widget)
+        self.__splitter.addWidget(self.__stepper_motor_widget)
 
         self.setLayout(QVBoxLayout())
         self.layout().addLayout(serial_port_layout)  # type: ignore
@@ -95,3 +105,7 @@ class Lab3MainWindowCentralWidget(QWidget):
 
     def __slot_on_serial_ready(self):
         print(f"{self.__serial_port.readAll().data().hex().upper()}")
+
+    def __slot_on_serial_write(self, message: bytearray):
+        self.__serial_port.write(message)
+        logger.debug(f"serial_bytes: {message}")
