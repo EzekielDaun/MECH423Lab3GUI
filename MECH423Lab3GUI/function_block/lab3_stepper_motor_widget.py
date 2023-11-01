@@ -8,8 +8,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
 )
-from serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
-from widget.valued_slider import ValuedSlider
+
+from ..serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
+from ..widget.valued_slider import ValuedSlider
 
 
 class StepperMotorWidget(QGroupBox):

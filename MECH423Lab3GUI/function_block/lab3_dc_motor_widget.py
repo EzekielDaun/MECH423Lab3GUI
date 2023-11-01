@@ -1,11 +1,9 @@
 from loguru import logger
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (
-    QGroupBox,
-    QHBoxLayout,
-)
-from serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
-from widget.valued_slider import ValuedSlider
+from PySide6.QtWidgets import QGroupBox, QHBoxLayout
+
+from ..serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
+from ..widget.valued_slider import ValuedSlider
 
 
 class DCMotorWidget(QGroupBox):

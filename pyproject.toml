@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "MECH423Lab3GUI"
+version = "0.1.0"
+description = "Qt for Python GUI for 2023W UBC MECH 423 Lab3"
+authors = ["EzekielDaun <liuyifei0905@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11, <=3.12"
+PySide6 = "^6.6.0"
+loguru = "^0.7.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

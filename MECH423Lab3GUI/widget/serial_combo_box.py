@@ -1,7 +1,5 @@
 from PySide6.QtSerialPort import QSerialPortInfo
-from PySide6.QtWidgets import (
-    QComboBox,
-)
+from PySide6.QtWidgets import QComboBox
 
 
 class SerialComboBox(QComboBox):
