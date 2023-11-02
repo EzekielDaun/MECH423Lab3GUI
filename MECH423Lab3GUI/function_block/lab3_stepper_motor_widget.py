@@ -97,10 +97,12 @@ class StepperMotorOpenLoopSpeedWidget(QGroupBox):
         self.layout().addWidget(self.__valued_slider)
 
     def __slot_on_speed_changed(self, value: int):
+        interval = -abs(value) + 2**16 - 1
+
         self.signal_serial_write.emit(
             SerialPacket(
                 SerialControlBytes.STEPPER_MOTOR_OPEN_LOOP_SPEED,
-                bytearray([int(value > 0), abs(value) >> 8, abs(value) & 0x00FF]),
+                bytearray([int(value > 0), abs(interval) >> 8, abs(interval) & 0x00FF]),
             ).to_bytearray()
         )
         logger.info(
