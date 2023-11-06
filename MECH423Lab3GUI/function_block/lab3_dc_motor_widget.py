@@ -59,6 +59,10 @@ class DCMotorWidget(QGroupBox):
                 / (self.__x_data[-1] - self.__x_data[-2])
             )
 
+        self.__x_data = self.__x_data[-100:]
+        self.__y_data1 = self.__y_data1[-100:]
+        self.__y_data2 = self.__y_data2[-100:]
+
         self.__plot_widget.clear()
         self.__plot_widget.plot(self.__x_data, self.__y_data1, pen="r", symbol="o")
         self.__plot_widget.plot(self.__x_data, self.__y_data2, pen="g", symbol="o")

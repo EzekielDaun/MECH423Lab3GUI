@@ -118,7 +118,7 @@ class Lab3MainWindowCentralWidget(QWidget):
                 packet = MCUPacket.from_bytes(self.__serial_rx_buffer[:4])
                 self.__serial_rx_buffer = self.__serial_rx_buffer[4:]
                 self.__dc_motor_widget.update_plot(
-                    (packet.data[0] << 8 + packet.data[1], datetime.now())
+                    ((packet.data[0] << 8) + packet.data[1], datetime.now())
                 )
             except Exception:
                 self.__serial_rx_buffer.pop(0)
