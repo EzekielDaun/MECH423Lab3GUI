@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from loguru import logger
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextCursor
@@ -16,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from ..function_block.lab3_dc_motor_widget import DCMotorWidget
 from ..function_block.lab3_stepper_motor_widget import StepperMotorWidget
+from ..serial_protocol.lab3_serial_protocol import MCUPacket
 from ..widget.serial_combo_box import SerialComboBox
 
 
@@ -54,6 +57,7 @@ class Lab3MainWindowCentralWidget(QWidget):
 
         # serial port
         self.__serial_port = QSerialPort()
+        self.__serial_rx_buffer = bytearray()
         self.__serial_port.readyRead.connect(self.__slot_on_serial_ready)
 
         serial_port_layout = QHBoxLayout()
@@ -105,8 +109,20 @@ class Lab3MainWindowCentralWidget(QWidget):
             self.__splitter.setDisabled(True)
 
     def __slot_on_serial_ready(self):
-        print(f"{self.__serial_port.readAll().data().hex().upper()}")
+        data = self.__serial_port.readAll().data()
+        logger.debug(f"{data.hex().upper()}")
+
+        self.__serial_rx_buffer += data
+        while len(self.__serial_rx_buffer) >= 4:
+            try:
+                packet = MCUPacket.from_bytes(self.__serial_rx_buffer[:4])
+                self.__serial_rx_buffer = self.__serial_rx_buffer[4:]
+                self.__dc_motor_widget.update_plot(
+                    (packet.data[0] << 8 + packet.data[1], datetime.now())
+                )
+            except Exception:
+                self.__serial_rx_buffer.pop(0)
 
     def __slot_on_serial_write(self, message: bytearray):
         self.__serial_port.write(message)
-        logger.debug(f"serial_bytes: {message}")
+        logger.debug(f"serial_bytes: {message.hex().upper()}")

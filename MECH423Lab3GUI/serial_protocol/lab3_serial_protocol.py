@@ -25,3 +25,18 @@ class SerialPacket:
             temp = temp + bytearray(15 - len(temp))
 
         return temp + bytearray([sum(temp) % 0x100])  # checksum
+
+
+@dataclass(frozen=True)
+class MCUPacket:
+    data: bytearray
+
+    @staticmethod
+    def from_bytes(bytes: bytes):
+        if len(bytes) != 4:
+            raise ValueError("Invalid packet length")
+        if bytes[0] != 0xFF:
+            raise ValueError("Invalid packet header")
+        if bytes[3] != sum(bytes[:3]) % 0x100:
+            raise ValueError("Invalid checksum")
+        return MCUPacket(bytearray(bytes[1:3]))
