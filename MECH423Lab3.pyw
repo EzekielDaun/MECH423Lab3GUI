@@ -2,12 +2,19 @@ import sys
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
+import darkdetect
+import pyqtgraph as pg
 from loguru import logger
 from PySide6.QtWidgets import QApplication
+
 from MECH423Lab3GUI.window.lab3_main_window import Lab3MainWindow
 
 if __name__ == "__main__":
     app = QApplication([])
+
+    if darkdetect.isLight():
+        pg.setConfigOption("background", "w")
+        pg.setConfigOption("foreground", "k")
 
     main_window = Lab3MainWindow()
     main_window.show()
