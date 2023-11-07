@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from loguru import logger
-from pyqtgraph import PlotWidget
+from pyqtgraph import GraphicsLayoutWidget
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout
 
@@ -25,15 +25,26 @@ class DCMotorWidget(QGroupBox):
             self.__slot_on_dc_motor_duty_changed
         )
 
-        self.__plot_widget = PlotWidget()
-        self.__plot_widget.setTitle("DC Motor Data")
+        self.__graphics_layout_widget = GraphicsLayoutWidget()
+        # self.__graphics_layout_widget.setTitle("DC Motor Data")
+
+        self.__position_plot = self.__graphics_layout_widget.addPlot(
+            title="Position", row=0, col=0
+        )
+        self.__position_plot.setLabel("left", "Position (Cycle)")
+
+        self.__velocity_plot = self.__graphics_layout_widget.addPlot(
+            title="Velocity", row=1, col=0
+        )
+        self.__velocity_plot.setLabel("left", "Velocity (RPM)")
+
         self.__x_data = []
         self.__y_data1 = []
         self.__y_data2 = [0]
 
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(self.__dc_motor_slider)
-        self.layout().addWidget(self.__plot_widget)
+        self.layout().addWidget(self.__graphics_layout_widget)
 
     def __slot_on_dc_motor_duty_changed(self, value: int):
         self.signal_serial_write.emit(
@@ -52,17 +63,21 @@ class DCMotorWidget(QGroupBox):
         count, time = value
 
         self.__x_data.append(time.timestamp())
-        self.__y_data1.append(count)
+        count_in_cycle = (count - 0x4000) / (20.4 * 48 / 4)
+        self.__y_data1.append(count_in_cycle)
         if len(self.__y_data1) >= 2:
             self.__y_data2.append(
                 (self.__y_data1[-1] - self.__y_data1[-2])
                 / (self.__x_data[-1] - self.__x_data[-2])
+                * 60
             )
 
         self.__x_data = self.__x_data[-100:]
         self.__y_data1 = self.__y_data1[-100:]
         self.__y_data2 = self.__y_data2[-100:]
 
-        self.__plot_widget.clear()
-        self.__plot_widget.plot(self.__x_data, self.__y_data1, pen="r", symbol="o")
-        self.__plot_widget.plot(self.__x_data, self.__y_data2, pen="g", symbol="o")
+        self.__position_plot.clear()
+        self.__position_plot.plot(self.__x_data, self.__y_data1, pen="r", symbol="o")
+
+        self.__velocity_plot.clear()
+        self.__velocity_plot.plot(self.__x_data, self.__y_data2, pen="g", symbol="o")
