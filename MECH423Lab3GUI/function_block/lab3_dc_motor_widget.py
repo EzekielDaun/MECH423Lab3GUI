@@ -3,7 +3,7 @@ from datetime import datetime
 from loguru import logger
 from pyqtgraph import GraphicsLayoutWidget
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QGroupBox, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout
 
 from ..serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
 from ..widget.valued_slider import ValuedSlider
@@ -17,6 +17,7 @@ class DCMotorWidget(QGroupBox):
 
         self.setTitle("DC Motor Control")
 
+        # duty cycle control
         self.__dc_motor_duty_slider = ValuedSlider()
         self.__dc_motor_duty_slider.slider.setTracking(True)
         self.__dc_motor_duty_slider.slider.setRange(-0xFFFF, 0xFFFF)
@@ -24,7 +25,11 @@ class DCMotorWidget(QGroupBox):
         self.__dc_motor_duty_slider.signal_value_changed.connect(
             self.__slot_on_dc_motor_duty_changed
         )
+        dc_motor_duty_group_box = QGroupBox("Open Loop Speed Control")
+        dc_motor_duty_group_box.setLayout(QHBoxLayout())
+        dc_motor_duty_group_box.layout().addWidget(self.__dc_motor_duty_slider)
 
+        # absolute position control
         self.__dc_motor_position_slider = ValuedSlider()
         self.__dc_motor_position_slider.slider.setTracking(True)
         self.__dc_motor_position_slider.slider.setRange(-32768, 32767)
@@ -33,14 +38,29 @@ class DCMotorWidget(QGroupBox):
         self.__dc_motor_position_slider.signal_value_changed.connect(
             self.__slot_on_absolute_position_changed
         )
+        # relative position control
+        self.__dc_motor_position_increment_spinbox = QSpinBox()
+        self.__dc_motor_position_increment_spinbox.setRange(-32768, 32767)
+        self.__dc_motor_relative_position_move_button = QPushButton("Relative Move")
+        self.__dc_motor_relative_position_move_button.clicked.connect(
+            self.__slot_on_relative_position_changed
+        )
+        relative_position_layout = QHBoxLayout()
+        relative_position_layout.addWidget(self.__dc_motor_position_increment_spinbox)
+        relative_position_layout.addWidget(
+            self.__dc_motor_relative_position_move_button
+        )
+        dc_motor_position_group_box = QGroupBox("Position Control")
+        dc_motor_position_group_box.setLayout(QVBoxLayout())
+        dc_motor_position_group_box.layout().addWidget(self.__dc_motor_position_slider)
+        dc_motor_position_group_box.layout().addLayout(relative_position_layout)  # type: ignore
 
-        slider_layout = QVBoxLayout()
-        slider_layout.addWidget(self.__dc_motor_duty_slider)
-        slider_layout.addWidget(self.__dc_motor_position_slider)
+        left_slider_layout = QVBoxLayout()
+        left_slider_layout.addWidget(dc_motor_duty_group_box)
+        left_slider_layout.addWidget(dc_motor_position_group_box)
 
+        # data plot
         self.__graphics_layout_widget = GraphicsLayoutWidget()
-        # self.__graphics_layout_widget.setTitle("DC Motor Data")
-
         self.__position_plot = self.__graphics_layout_widget.addPlot(
             title="Position", row=0, col=0
         )
@@ -55,9 +75,13 @@ class DCMotorWidget(QGroupBox):
         self.__y_data1 = []
         self.__y_data2 = [0]
 
+        dc_motor_data_plot_group_box = QGroupBox("Data Plot")
+        dc_motor_data_plot_group_box.setLayout(QHBoxLayout())
+        dc_motor_data_plot_group_box.layout().addWidget(self.__graphics_layout_widget)
+
         self.setLayout(QHBoxLayout())
-        self.layout().addLayout(slider_layout)  # type: ignore
-        self.layout().addWidget(self.__graphics_layout_widget)
+        self.layout().addLayout(left_slider_layout)  # type: ignore
+        # self.layout().addWidget(dc_motor_data_plot_group_box)
 
     def __slot_on_dc_motor_duty_changed(self, value: int):
         self.signal_serial_write.emit(
@@ -69,8 +93,6 @@ class DCMotorWidget(QGroupBox):
         logger.info(
             f"DC motor duty changed to {abs(value)}, direction: {int(value > 0)}"
         )
-
-        # self.update_plot((value, datetime.now()))
 
     def update_plot(self, value: tuple[int, datetime]):
         count, time = value
@@ -103,3 +125,26 @@ class DCMotorWidget(QGroupBox):
             ).to_bytearray()
         )
         logger.info(f"DC motor absolute position changed to {value}")
+
+    def __slot_on_relative_position_changed(self):
+        self.signal_serial_write.emit(
+            SerialPacket(
+                SerialControlBytes.DC_MOTOR_RELATIVE_POSITION,
+                bytearray(
+                    self.__dc_motor_position_increment_spinbox.value().to_bytes(
+                        length=2, byteorder="big", signed=True
+                    )
+                ),
+            ).to_bytearray()
+        )
+
+        self.__dc_motor_position_slider.blockSignals(True)
+        self.__dc_motor_position_slider.slider.setValue(
+            self.__dc_motor_position_slider.slider.value()
+            + self.__dc_motor_position_increment_spinbox.value()
+        )
+        self.__dc_motor_position_slider.blockSignals(False)
+
+        logger.info(
+            f"DC motor relative position moved {self.__dc_motor_position_increment_spinbox.value()}"
+        )
