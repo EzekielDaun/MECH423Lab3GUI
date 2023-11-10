@@ -3,7 +3,7 @@ from datetime import datetime
 from loguru import logger
 from pyqtgraph import GraphicsLayoutWidget
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QGroupBox, QHBoxLayout
+from PySide6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
 
 from ..serial_protocol.lab3_serial_protocol import SerialControlBytes, SerialPacket
 from ..widget.valued_slider import ValuedSlider
@@ -17,13 +17,26 @@ class DCMotorWidget(QGroupBox):
 
         self.setTitle("DC Motor Control")
 
-        self.__dc_motor_slider = ValuedSlider()
-        self.__dc_motor_slider.slider.setTracking(True)
-        self.__dc_motor_slider.slider.setRange(-0xFFFF, 0xFFFF)
-        self.__dc_motor_slider.spinbox.setRange(-0xFFFF, 0xFFFF)
-        self.__dc_motor_slider.signal_value_changed.connect(
+        self.__dc_motor_duty_slider = ValuedSlider()
+        self.__dc_motor_duty_slider.slider.setTracking(True)
+        self.__dc_motor_duty_slider.slider.setRange(-0xFFFF, 0xFFFF)
+        self.__dc_motor_duty_slider.spinbox.setRange(-0xFFFF, 0xFFFF)
+        self.__dc_motor_duty_slider.signal_value_changed.connect(
             self.__slot_on_dc_motor_duty_changed
         )
+
+        self.__dc_motor_position_slider = ValuedSlider()
+        self.__dc_motor_position_slider.slider.setTracking(True)
+        self.__dc_motor_position_slider.slider.setRange(-32768, 32767)
+        self.__dc_motor_position_slider.spinbox.setRange(-32768, 32767)
+        self.__dc_motor_position_slider.slider.setValue(0)
+        self.__dc_motor_position_slider.signal_value_changed.connect(
+            self.__slot_on_absolute_position_changed
+        )
+
+        slider_layout = QVBoxLayout()
+        slider_layout.addWidget(self.__dc_motor_duty_slider)
+        slider_layout.addWidget(self.__dc_motor_position_slider)
 
         self.__graphics_layout_widget = GraphicsLayoutWidget()
         # self.__graphics_layout_widget.setTitle("DC Motor Data")
@@ -43,7 +56,7 @@ class DCMotorWidget(QGroupBox):
         self.__y_data2 = [0]
 
         self.setLayout(QHBoxLayout())
-        self.layout().addWidget(self.__dc_motor_slider)
+        self.layout().addLayout(slider_layout)  # type: ignore
         self.layout().addWidget(self.__graphics_layout_widget)
 
     def __slot_on_dc_motor_duty_changed(self, value: int):
@@ -81,3 +94,12 @@ class DCMotorWidget(QGroupBox):
 
         self.__velocity_plot.clear()
         self.__velocity_plot.plot(self.__x_data, self.__y_data2, pen="g", symbol="o")
+
+    def __slot_on_absolute_position_changed(self, value: int):
+        self.signal_serial_write.emit(
+            SerialPacket(
+                SerialControlBytes.DC_MOTOR_ABSOLUTE_POSITION,
+                bytearray(value.to_bytes(length=2, byteorder="big", signed=True)),
+            ).to_bytearray()
+        )
+        logger.info(f"DC motor absolute position changed to {value}")

@@ -5,6 +5,8 @@ from enum import IntEnum
 class SerialControlBytes(IntEnum):
     ECHO = (0x00 << 8) + 0x00
     DC_MOTOR_OPEN_LOOP_VOLTAGE = (0x01 << 8) + 0x00
+    DC_MOTOR_ABSOLUTE_POSITION = (0x01 << 8) + 0x01
+    DC_MOTOR_RELATIVE_POSITION = (0x01 << 8) + 0x02
     STEPPER_MOTOR_SINGLE_STEP = (0x02 << 8) + 0x00
     STEPPER_MOTOR_OPEN_LOOP_SPEED = (0x02 << 8) + 0x01
 
