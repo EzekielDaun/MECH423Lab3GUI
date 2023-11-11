@@ -32,15 +32,15 @@ class DCMotorWidget(QGroupBox):
         # absolute position control
         self.__dc_motor_position_slider = ValuedSlider()
         self.__dc_motor_position_slider.slider.setTracking(True)
-        self.__dc_motor_position_slider.slider.setRange(-32768, 32767)
-        self.__dc_motor_position_slider.spinbox.setRange(-32768, 32767)
+        self.__dc_motor_position_slider.slider.setRange(-300, 300)
+        self.__dc_motor_position_slider.spinbox.setRange(-300, 300)
         self.__dc_motor_position_slider.slider.setValue(0)
         self.__dc_motor_position_slider.signal_value_changed.connect(
             self.__slot_on_absolute_position_changed
         )
         # relative position control
         self.__dc_motor_position_increment_spinbox = QSpinBox()
-        self.__dc_motor_position_increment_spinbox.setRange(-32768, 32767)
+        self.__dc_motor_position_increment_spinbox.setRange(-300, 300)
         self.__dc_motor_relative_position_move_button = QPushButton("Relative Move")
         self.__dc_motor_relative_position_move_button.clicked.connect(
             self.__slot_on_relative_position_changed
@@ -121,7 +121,8 @@ class DCMotorWidget(QGroupBox):
         self.signal_serial_write.emit(
             SerialPacket(
                 SerialControlBytes.DC_MOTOR_ABSOLUTE_POSITION,
-                bytearray(value.to_bytes(length=2, byteorder="big", signed=True)),
+                bytearray([0x00])+
+                bytearray(value.to_bytes(length=2, byteorder="little", signed=True)),
             ).to_bytearray()
         )
         logger.info(f"DC motor absolute position changed to {value}")
@@ -130,9 +131,10 @@ class DCMotorWidget(QGroupBox):
         self.signal_serial_write.emit(
             SerialPacket(
                 SerialControlBytes.DC_MOTOR_RELATIVE_POSITION,
+                bytearray([0x00])+
                 bytearray(
                     self.__dc_motor_position_increment_spinbox.value().to_bytes(
-                        length=2, byteorder="big", signed=True
+                        length=2, byteorder="little", signed=True
                     )
                 ),
             ).to_bytearray()
