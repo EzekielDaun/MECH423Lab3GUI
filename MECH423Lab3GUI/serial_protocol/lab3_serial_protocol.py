@@ -9,6 +9,7 @@ class SerialControlBytes(IntEnum):
     DC_MOTOR_RELATIVE_POSITION = (0x01 << 8) + 0x02
     STEPPER_MOTOR_SINGLE_STEP = (0x02 << 8) + 0x00
     STEPPER_MOTOR_OPEN_LOOP_SPEED = (0x02 << 8) + 0x01
+    TWO_AXIS_CONTROL = (0x03 << 8) + 0x00
 
 
 @dataclass(frozen=True)

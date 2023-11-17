@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import batched
 
 from loguru import logger
 from PySide6.QtCore import Qt, Signal
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..function_block.lab3_2axis_control_widget import TwoAxisControlWidget
 from ..function_block.lab3_dc_motor_widget import DCMotorWidget
 from ..function_block.lab3_stepper_motor_widget import StepperMotorWidget
 from ..serial_protocol.lab3_serial_protocol import MCUPacket
@@ -76,11 +78,16 @@ class Lab3MainWindowCentralWidget(QWidget):
         self.__stepper_motor_widget.signal_serial_write.connect(
             self.__slot_on_serial_write
         )
+        self.__2_axis_control_widget = TwoAxisControlWidget()
+        self.__2_axis_control_widget.signal_serial_write.connect(
+            self.__slot_on_serial_write
+        )
 
         self.__splitter = QSplitter(Qt.Orientation.Horizontal)
         self.__splitter.setDisabled(True)
         self.__splitter.addWidget(self.__dc_motor_widget)
         self.__splitter.addWidget(self.__stepper_motor_widget)
+        self.__splitter.addWidget(self.__2_axis_control_widget)
 
         self.setLayout(QVBoxLayout())
         self.layout().addLayout(serial_port_layout)  # type: ignore
@@ -125,4 +132,6 @@ class Lab3MainWindowCentralWidget(QWidget):
 
     def __slot_on_serial_write(self, message: bytearray):
         self.__serial_port.write(message)
-        logger.debug(f"serial_bytes: {message.hex().upper()}")
+        logger.debug(
+            f"serial_bytes: {", ".join([x+y for (x,y) in (batched(message.hex().upper(),2))])}"
+        )
