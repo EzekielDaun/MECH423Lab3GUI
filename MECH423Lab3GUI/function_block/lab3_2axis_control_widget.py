@@ -29,6 +29,7 @@ class TwoAxisControlWidget(QGroupBox):
 
         self.__speed_input = QDoubleSpinBox()
         self.__speed_input.setRange(0, 100)
+        self.__speed_input.setValue(100)
         self.__speed_input.setPrefix("Speed: ")
         self.__speed_input.setSuffix("%")
 
@@ -38,6 +39,7 @@ class TwoAxisControlWidget(QGroupBox):
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(self.__x_input)
         self.layout().addWidget(self.__y_input)
+        self.layout().addWidget(self.__speed_input)
         self.layout().addWidget(self.__button)
 
     def __slot_on_move_pushed(self):
@@ -48,24 +50,24 @@ class TwoAxisControlWidget(QGroupBox):
 
         y_input_cm = self.__y_input.value()
         y_input_step = y_input_cm * 100
-        
+
         timer_interval_ms = 20
         self.__timer_count = int(((x_input_cm**2 + y_input_cm**2) ** 0.5) * 10)
-        if self.__timer_count ==0:
+        if self.__timer_count == 0:
             return
-        
-        total_time_ms = self.__timer_count*timer_interval_ms
+
+        total_time_ms = self.__timer_count * timer_interval_ms
 
         self.__x_step = int(x_input_encoder_tick / self.__timer_count)
         self.__y_step = int(y_input_step / self.__timer_count)
 
         try:
-            stepper_interval_ms = total_time_ms/abs(y_input_step)
-            self.__stepper_speed_interval = int(stepper_interval_ms/1e3*8e6)
+            stepper_interval_ms = total_time_ms / abs(y_input_step)
+            self.__stepper_speed_interval = int(stepper_interval_ms / 1e3 * 8e6)
         except Exception:
             self.__stepper_speed_interval = 0xFF
 
-        self.__timer.start(timer_interval_ms)
+        self.__timer.start(int(timer_interval_ms / (self.__speed_input.value() / 100)))
         logger.info(
             f"Start moving {self.__timer_count} total steps with X step {self.__x_step} encoder ticks and Y step {self.__y_step} half steps"
         )
@@ -86,11 +88,10 @@ class TwoAxisControlWidget(QGroupBox):
                             self.__x_step.to_bytes(2, "little", signed=True)
                         )
                         + bytearray(  # stepper motor speed
-                            self.__stepper_speed_interval.to_bytes(2, "little", signed=False)
+                            self.__stepper_speed_interval.to_bytes(
+                                2, "little", signed=False
+                            )
                         )
-                        # + bytearray(  # stepper motor speed
-                        #     int(65535-50000).to_bytes(2, "little", signed=False)
-                        # )
                         + bytearray(  # stepper motor relative position
                             self.__y_step.to_bytes(2, "little", signed=True)
                         ),
