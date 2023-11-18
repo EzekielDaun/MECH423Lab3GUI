@@ -51,7 +51,7 @@ class TwoAxisControlWidget(QGroupBox):
         y_input_cm = self.__y_input.value()
         y_input_step = y_input_cm * 100
 
-        timer_interval_ms = 20
+        timer_interval_ms = 8
         self.__timer_count = int(((x_input_cm**2 + y_input_cm**2) ** 0.5) * 10)
         if self.__timer_count == 0:
             return
