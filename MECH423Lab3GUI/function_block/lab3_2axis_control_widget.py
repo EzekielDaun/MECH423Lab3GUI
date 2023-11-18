@@ -42,41 +42,55 @@ class TwoAxisControlWidget(QGroupBox):
 
     def __slot_on_move_pushed(self):
         self.__timer.stop()
+
         x_input_cm = self.__x_input.value()
+        x_input_encoder_tick = x_input_cm * 58
+
         y_input_cm = self.__y_input.value()
+        y_input_step = y_input_cm * 100
+        
+        timer_interval_ms = 20
+        self.__timer_count = int(((x_input_cm**2 + y_input_cm**2) ** 0.5) * 10)
+        if self.__timer_count ==0:
+            return
+        
+        total_time_ms = self.__timer_count*timer_interval_ms
 
-        self.__step_count = int(((x_input_cm**2 + y_input_cm**2) ** 0.5) * 10)
+        self.__x_step = int(x_input_encoder_tick / self.__timer_count)
+        self.__y_step = int(y_input_step / self.__timer_count)
 
-        x_input_encoder_tick = x_input_cm * 1000
-        y_input_step = y_input_cm * 1000
-        self.__x_step = int(x_input_encoder_tick / self.__step_count)
-        self.__y_step = int(y_input_step / self.__step_count)
+        try:
+            stepper_interval_ms = total_time_ms/abs(y_input_step)
+            self.__stepper_speed_interval = int(stepper_interval_ms/1e3*8e6)
+        except Exception:
+            self.__stepper_speed_interval = 0xFF
 
-        self.__timer.start(50)
+        self.__timer.start(timer_interval_ms)
         logger.info(
-            f"Start moving {self.__step_count} total steps with X step {self.__x_step} encoder ticks and Y step {self.__y_step} half steps"
+            f"Start moving {self.__timer_count} total steps with X step {self.__x_step} encoder ticks and Y step {self.__y_step} half steps"
         )
 
         self.__button.setDisabled(True)
 
     def __slot_on_timer_timeout(self):
         if self.isEnabled():
-            if self.__step_count > 0:
-                self.__step_count -= 1
+            if self.__timer_count > 0:
+                self.__timer_count -= 1
 
-                logger.debug(f"{self.__step_count}")
+                logger.debug(f"{self.__timer_count}")
                 self.signal_serial_write.emit(
                     SerialPacket(
                         SerialControlBytes.TWO_AXIS_CONTROL,
-                        bytearray([0x00, 0x00, 0x00, 0x00])
+                        bytearray([0x00])
                         + bytearray(  # DC motor relative position
                             self.__x_step.to_bytes(2, "little", signed=True)
                         )
-                        + bytearray([0x00])
                         + bytearray(  # stepper motor speed
-                            int(10).to_bytes(2, "little", signed=False)
+                            self.__stepper_speed_interval.to_bytes(2, "little", signed=False)
                         )
-                        + bytearray([0x00])
+                        # + bytearray(  # stepper motor speed
+                        #     int(65535-50000).to_bytes(2, "little", signed=False)
+                        # )
                         + bytearray(  # stepper motor relative position
                             self.__y_step.to_bytes(2, "little", signed=True)
                         ),
