@@ -62,7 +62,9 @@ class TwoAxisControlWidget(QGroupBox):
         self.__y_step = int(y_input_step / self.__timer_count)
 
         try:
-            stepper_interval_ms = total_time_ms / abs(y_input_step) / (self.__speed_input.value() / 100)
+            stepper_interval_ms = (
+                total_time_ms / abs(y_input_step) / (self.__speed_input.value() / 100)
+            )
             self.__stepper_speed_interval = int(stepper_interval_ms / 1e3 * 8e6)
         except Exception:
             self.__stepper_speed_interval = 0xFF
